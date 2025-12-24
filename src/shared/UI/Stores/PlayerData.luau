@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local charm = require(ReplicatedStorage.Packages.Charm)
 local template = require(ReplicatedStorage.Data.DataTemplate)
@@ -11,7 +12,7 @@ local showCashNotification = require("../Components/Cash/CashNotifications")
 
 local firstTime = true
 
-ReplicaClient.OnNew("PlayerData", function(replica: ReplicaClient.Replica)
+ReplicaClient.OnNew(tostring(Players.LocalPlayer.UserId), function(replica: ReplicaClient.Replica)
 	if firstTime then
 		local data = replica.Data :: template.Profile
 		cashAtom(data.Cash)

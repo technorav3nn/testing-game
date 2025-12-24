@@ -4,10 +4,10 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local DataService = require("@self/Services/DataService")
 local Loader = require(ReplicatedStorage.Packages.Loader)
 
+DataService:Init()
+
 Loader.SpawnAll(Loader.LoadChildren(ServerScriptService.Server.Managers), "OnStart")
 Loader.SpawnAll(Loader.LoadDescendants(ServerScriptService.Server.Managers.Network), "OnStart")
-
-DataService:Init()
 
 -- DataService.NewPlayerDataLoaded:Connect(function(player)
 -- 	while true do

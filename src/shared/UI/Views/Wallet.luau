@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 
-local WalletDropCashEvent = require(ReplicatedStorage.Network.Events.WalletDropCash):Client()
+local WalletDropCashFunction = require(ReplicatedStorage.Network.Functions.WalletDropCash)
 
 local Button = require("../Components/Base/Button")
 local UIFrame = require("../Components/Base/Frame")
@@ -29,13 +29,20 @@ local function WalletView()
 		end
 
 		local amount = tonumber(text() :: string) :: number
-		WalletDropCashEvent:Fire(amount)
+		local success, _uncast = WalletDropCashFunction:Call(amount):Await()
 
-		StarterGui:SetCore("SendNotification", {
-			Title = "Dropped Cash",
-			Text = `Succesfully dropped ${text()} cash!`,
-			Duration = 3.5,
-		})
+		local result = _uncast :: WalletDropCashFunction.ReturnType
+
+		if not success then
+			error("[Wallet]: couldn't drop cash!!")
+		end
+		if typeof(result) == "number" then
+			return StarterGui:SetCore("SendNotification", {
+				Title = "Dropped Cash",
+				Text = `You must wait {math.round(result)} seconds before dropping again!`,
+				Duration = 3.5,
+			})
+		end
 	end
 
 	return create "ScreenGui" {

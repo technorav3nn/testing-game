@@ -1,1 +1,1 @@
-return require("@self/RobbableSystem")
+return require("@self/CashDropperService")

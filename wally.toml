@@ -17,5 +17,9 @@ Charm = "littensy/charm@^0.10"
 Trove = "sleitnick/trove@1.8.0"
 Promise = "maximumadhd/promise-typed@1.0.0"
 Red = "red-blox/red@2.3.0"
+Sift = "csqrl/sift@0.0.11"
+Conch = "alicesaidhi/conch@0.3.1"
+ConchUI = "alicesaidhi/conch-ui@0.3.1"
+FastCast = "megamonsta2/fastcast@1.0.0"
 
 [server-dependencies]

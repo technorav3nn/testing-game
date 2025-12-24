@@ -1,4 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+
 local DataService = require("../../Services/DataService")
 local Trove = require(ReplicatedStorage.Packages.Trove)
 
@@ -17,7 +19,7 @@ function CashDrop.new(amount: number, cframe: CFrame, anchored: boolean): CashDr
 	local self = setmetatable({}, CashDrop) :: CashDrop
 	self._trove = Trove.new()
 
-	self._CashDropInstance = self._trove:Add(ReplicatedStorage.Assets.Cash.DroppedCash:Clone())
+	self._CashDropInstance = self._trove:Add(ServerStorage.Assets.Cash.DroppedCash:Clone())
 	local primaryPart = self._CashDropInstance.PrimaryPart :: BasePart
 	primaryPart.CFrame = cframe
 	primaryPart.Anchored = anchored
@@ -46,6 +48,7 @@ function CashDrop:_SetupEvents()
 	local prompt = (self._CashDropInstance :: any).MeshPart.Attachment.ProximityPrompt :: ProximityPrompt
 
 	self._trove:Add(prompt.Triggered:Connect(function(player)
+		prompt:Destroy()
 		task.spawn(function()
 			DataService:GiveCash(player, amount):await()
 		end)

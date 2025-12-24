@@ -5,3 +5,5 @@ mixed_table = "allow"
 incorrect_standard_library_use = "allow"
 shadowing = "allow"
 undefined_variable = "allow"
+# allow this, because it allows better prototyping
+roblox_manual_fromscale_or_fromoffset = "allow"

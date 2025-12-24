@@ -21,6 +21,9 @@
 				"Client": {
 					"$path": "src/client"
 				}
+			},
+			"StarterCharacterScripts": {
+				"$path": "src/starter-character"
 			}
 		},
 		"Workspace": {

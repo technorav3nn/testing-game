@@ -9,6 +9,7 @@ local template = require(ReplicatedStorage.Data.DataTemplate)
 local Promise = require(ReplicatedStorage.Packages["_Index"]["paradoxum-games_lyra@0.6.0"].lyra.Promise)
 
 type DataService = {
+
 	replicas: { Replica.Replica },
 	store: typeof(Lyra.createPlayerStore({
 		template = template.profileTemplate,
@@ -17,10 +18,12 @@ type DataService = {
 			return true
 		end,
 	})),
+	isReady: boolean,
 	playerDataChangedSignals: { Signal.Signal<template.Profile, template.Profile> },
 
 	NewPlayerDataLoaded: typeof(Signal.new()),
 	PlayerDataChanged: typeof(Signal.new()),
+	Ready: typeof(Signal.new()),
 
 	GetPlayerDataChangedSignal: (
 		self: DataService,
@@ -34,13 +37,16 @@ type DataService = {
 	GetData: (self: DataService, player: Player) -> Promise.TPromise<template.Profile>,
 	GiveCash: (self: DataService, player: Player, amount: number) -> Promise.TPromise<boolean>,
 	RemoveCash: (self: DataService, player: Player, amount: number) -> Promise.TPromise<boolean>,
+	SetCash: (self: DataService, player: Player, amount: number) -> Promise.TPromise<boolean>,
 }
 
 local DataService = {
 	replicas = {},
+	isReady = false,
 	playerDataChangedSignals = {},
 	NewPlayerDataLoaded = Signal.new() :: typeof(Signal.new()),
 	PlayerDataChanged = Signal.new() :: typeof(Signal.new()),
+	Ready = Signal.new() :: typeof(Signal.new()),
 } :: DataService
 
 function DataService:Init()
@@ -81,8 +87,8 @@ function DataService:Init()
 			syncWithClient :: (string, any, any) -> any,
 		},
 	})
-	DataService:SetupEvents()
 	self.store = store
+	DataService:SetupEvents()
 
 	return self
 end
@@ -97,9 +103,9 @@ end
 
 function DataService:SetupEvents()
 	Players.PlayerAdded:Connect(function(player)
+		self.playerDataChangedSignals[player.UserId] = Signal.new()
 		self.store:loadAsync(player)
 		self.NewPlayerDataLoaded:Fire(player)
-		self.playerDataChangedSignals[player.UserId] = Signal.new()
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		local replica = self.replicas[player.UserId]
@@ -120,13 +126,14 @@ function DataService:SetupEvents()
 	game:BindToClose(function()
 		self.store:closeAsync()
 	end)
+
+	self.isReady = true
+	self.Ready:Fire()
 end
 
 function DataService:SetupReplica(player: Player)
 	local data = self.store:getAsync(player)
-	local token = Replica.Token("PlayerData")
-
-	print(data)
+	local token = Replica.Token(tostring(player.UserId))
 
 	local replica = Replica.New({
 		Token = token :: any,
@@ -161,4 +168,13 @@ function DataService:RemoveCash(player: Player, amount: number): Promise.TPromis
 		return true
 	end)
 end
+
+function DataService:SetCash(player: Player, amount: number): Promise.TPromise<boolean>
+	local store = self.store
+	return store:update(player, function(data)
+		data.Cash = amount
+		return true
+	end)
+end
+
 return DataService

@@ -18,18 +18,21 @@ tool.Equipped:Connect(function()
 		-- isnt initalized yet, get data
 		DataService:GetData(player)
 			:andThen(function(data)
-				cashText.Text = Formatters:FormatNumber(data.Cash)
+				cashText.Text = `${Formatters:FormatNumber(data.Cash)}`
 			end)
 			:catch(function(...)
 				error("Couldn't update inital cash text in WalletBillboard", ...)
 			end)
 	end
 
+	if not DataService.isReady then
+		DataService.Ready:Wait()
+	end
 	-- connection is automatically disconnected when player leaves
 	DataService:GetPlayerDataChangedSignal(player):Connect(function(newData, oldData)
 		if newData.Cash == oldData.Cash then
 			return
 		end
-		cashText.Text = Formatters:FormatNumber(newData.Cash)
+		cashText.Text = `${Formatters:FormatNumber(newData.Cash)}`
 	end)
 end)
