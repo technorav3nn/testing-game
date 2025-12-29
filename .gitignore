@@ -7,3 +7,7 @@
 
 Packages/
 ServerPackages/
+
+# macOS specific
+**/.DS_Store
+.DS_Store
