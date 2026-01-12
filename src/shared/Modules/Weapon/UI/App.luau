@@ -1,14 +1,14 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local LoadingSpinner = require(ReplicatedStorage.UI.Components.Base.LoadingSpinner)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local VideCharm = require(ReplicatedStorage.Packages.VideCharm)
+local vide = require(ReplicatedStorage.Packages.Vide)
+
 local WeaponsSystem = require("../WeaponsSystem") :: any
 local px = require("../../../UI/Composables/usePx")
 local store = require("./Store")
 local theme = require("../../../UI/Theme")
-local vide = require(ReplicatedStorage.Packages.Vide)
 
 local useAtom = VideCharm.useAtom
 local create = vide.create
@@ -62,12 +62,11 @@ local function App()
 			store.isReloadingAtom(isReloading)
 		end))
 		trove:Add(RunService.Heartbeat:Connect(function(delta: number)
-			local camera = workspace.CurrentCamera
-			local distance = (camera.CFrame.Position - camera.Focus.Position).Magnitude
 			local isFp = isFirstPerson()
 			firstPerson(isFp)
 			if isFp then
 				-- hide the gui in first person
+				firstTime(false)
 				position(UDim2.new(1, -10, 1, -10))
 				return
 			end
@@ -98,31 +97,30 @@ local function App()
 		end))
 	end
 
+	setupWeaponGui()
+	cleanupTrove:Add(WeaponsSystem.CurrentWeaponChanged:Connect(function()
+		trove:Destroy()
+		setupWeaponGui()
+	end))
+
 	cleanup(function()
 		store.cleanupStore()
 		trove:Destroy()
 		cleanupTrove:Destroy()
 	end)
 
-	setupWeaponGui()
-	cleanupTrove:Add(WeaponsSystem.CurrentWeaponChanged:Connect(function()
-		trove:Destroy()
-		print(
-			"Weapon changed, setting up weapon GUI: ",
-			WeaponsSystem.currentWeapon and WeaponsSystem.currentWeapon.weaponInstance.Name
-		)
-		setupWeaponGui()
-	end))
-
-	local currentAmmo = useAtom(store.currentAmmoAtom)
-	local totalAmmo = useAtom(store.totalAmmoAtom)
-	local isReloading = useAtom(store.isReloadingAtom)
-	local currentWeaponName = useAtom(store.currentWeaponNameAtom)
+	local currentAmmo = useAtom((store.currentAmmoAtom :: any) :: () -> number?)
+	local totalAmmo = useAtom((store.totalAmmoAtom :: any) :: () -> number?)
+	local isReloading = useAtom((store.isReloadingAtom :: any) :: () -> boolean?)
+	local currentWeaponName = useAtom((store.currentWeaponNameAtom :: any) :: () -> string?)
 
 	return create "ScreenGui" {
 		Name = "WeaponsSystemDisplay",
 		Enabled = false,
 		create "Frame" {
+			Visible = function()
+				return not firstTime()
+			end,
 			Name = "WeaponInfo",
 			Position = function()
 				return position()

@@ -24,9 +24,10 @@ function CashDrop.new(amount: number, cframe: CFrame, anchored: boolean): CashDr
 	primaryPart.CFrame = cframe
 	primaryPart.Anchored = anchored
 	-- Make it heavier
-	primaryPart.CustomPhysicalProperties = PhysicalProperties.new(60, 0, 0)
+	primaryPart.CustomPhysicalProperties = PhysicalProperties.new(60, 0, 0, 0, 0)
 
 	self._CashDropInstance.Parent = game.Workspace
+	primaryPart:SetNetworkOwner(nil)
 
 	self.Amount = amount
 
@@ -43,7 +44,7 @@ function CashDrop:_SetupBillboardGui()
 	label.Text = `${self.Amount}`
 end
 
-function CashDrop:_SetupEvents()
+function CashDrop._SetupEvents(self: CashDrop)
 	local amount = self.Amount
 	local prompt = (self._CashDropInstance :: any).MeshPart.Attachment.ProximityPrompt :: ProximityPrompt
 
@@ -57,7 +58,7 @@ function CashDrop:_SetupEvents()
 end
 
 -- Methods
-function CashDrop:Destroy()
+function CashDrop.Destroy(self: CashDrop)
 	self._trove:Destroy()
 end
 

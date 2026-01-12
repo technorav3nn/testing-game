@@ -6,7 +6,21 @@ local Replica = require(ReplicatedStorage.Packages._Index["azutreo_replica@1.0.1
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local template = require(ReplicatedStorage.Data.DataTemplate)
 
+local Log = require(ReplicatedStorage.Packages["_Index"]["paradoxum-games_lyra@0.6.0"].lyra.Log)
 local Promise = require(ReplicatedStorage.Packages["_Index"]["paradoxum-games_lyra@0.6.0"].lyra.Promise)
+local Types = require(ReplicatedStorage.Packages["_Index"]["paradoxum-games_lyra@0.6.0"].lyra.Types)
+
+type PlayerStoreConfig<T> = {
+	name: string,
+	template: T,
+	schema: (value: any) -> (boolean, string?),
+	migrationSteps: { Types.MigrationStep }?,
+	importLegacyData: ((key: string) -> any?)?,
+	changedCallbacks: { (key: string, newData: T, oldData: T?) -> () }?,
+	logCallback: ((logMessage: Log.LogMessage) -> ())?,
+	memoryStoreService: MemoryStoreService?,
+	dataStoreService: DataStoreService?,
+}
 
 type DataService = {
 
@@ -17,7 +31,7 @@ type DataService = {
 		schema = function()
 			return true
 		end,
-	})),
+	} :: PlayerStoreConfig<template.Profile?>)),
 	isReady: boolean,
 	playerDataChangedSignals: { Signal.Signal<template.Profile, template.Profile> },
 
@@ -30,14 +44,26 @@ type DataService = {
 		player: Player
 	) -> Signal.Signal<template.Profile, template.Profile>,
 
-	Init: (self: DataService) -> (),
+	Init: (self: DataService) -> DataService,
 	SetupEvents: (self: DataService) -> (),
 	SetupReplica: (self: DataService, player: Player) -> (),
 
 	GetData: (self: DataService, player: Player) -> Promise.TPromise<template.Profile>,
+
 	GiveCash: (self: DataService, player: Player, amount: number) -> Promise.TPromise<boolean>,
 	RemoveCash: (self: DataService, player: Player, amount: number) -> Promise.TPromise<boolean>,
 	SetCash: (self: DataService, player: Player, amount: number) -> Promise.TPromise<boolean>,
+	GetCash: (self: DataService, player: Player) -> Promise.TPromise<number>,
+
+	Punish: (
+		self: DataService,
+		playerToPunish: Player,
+		banLength: number?,
+		reason: string,
+		issuedBy: number?,
+		isApiBan: boolean
+	) -> Promise.TPromise<boolean>,
+	GetActivePunishments: (self: DataService, player: Player) -> Promise.TPromise<{ any }>,
 }
 
 local DataService = {
@@ -49,7 +75,7 @@ local DataService = {
 	Ready = Signal.new() :: typeof(Signal.new()),
 } :: DataService
 
-function DataService:Init()
+function DataService.Init(self: DataService)
 	local function syncWithClient(key: string, newData: template.Profile, oldData: template.Profile)
 		local player = Players:GetPlayerByUserId(assert(tonumber(key)))
 
@@ -86,14 +112,19 @@ function DataService:Init()
 		changedCallbacks = {
 			syncWithClient :: (string, any, any) -> any,
 		},
-	})
+		migrationSteps = {
+			Lyra.MigrationStep.addFields("addPunishments2", {
+				Punishments = {},
+			}),
+		},
+	} :: PlayerStoreConfig<template.Profile?>)
 	self.store = store
 	DataService:SetupEvents()
 
-	return self
+	return self :: DataService
 end
 
-function DataService:GetData(player: Player)
+function DataService.GetData(self: DataService, player: Player)
 	return self.store:get(player)
 end
 
@@ -156,6 +187,7 @@ end
 function DataService:GiveCash(player: Player, amount: number): Promise.TPromise<boolean>
 	local store = self.store
 	return store:update(player, function(data)
+		assert(data ~= nil)
 		data.Cash += amount
 		return true
 	end)
@@ -164,6 +196,7 @@ end
 function DataService:RemoveCash(player: Player, amount: number): Promise.TPromise<boolean>
 	local store = self.store
 	return store:update(player, function(data)
+		assert(data ~= nil)
 		data.Cash -= amount
 		return true
 	end)
@@ -172,8 +205,41 @@ end
 function DataService:SetCash(player: Player, amount: number): Promise.TPromise<boolean>
 	local store = self.store
 	return store:update(player, function(data)
+		assert(data ~= nil)
 		data.Cash = amount
 		return true
+	end)
+end
+
+function DataService:GetCash(player: Player): Promise.TPromise<number>
+	local store = self.store
+	return store:get(player):andThen(function(data)
+		assert(data ~= nil)
+		return data.Cash
+	end)
+end
+
+function DataService:Punish(playerToPunish: Player, punishment: template.Punishment): Promise.TPromise<boolean>
+	local store = self.store
+	return store:update(playerToPunish, function(data)
+		assert(data ~= nil)
+		table.insert(data.Punishments, punishment)
+		return true
+	end)
+end
+
+function DataService:GetActivePunishments(player: Player): Promise.TPromise<{ template.Punishment }>
+	local store = self.store
+	return store:get(player):andThen(function(data)
+		assert(data ~= nil)
+		local activePunishments = {}
+		local currentTime = os.time()
+		for _, punishment in data.Punishments do
+			if punishment.duration == nil or (punishment.issuedAt + punishment.duration) > currentTime then
+				table.insert(activePunishments, punishment)
+			end
+		end
+		return activePunishments
 	end)
 end
 

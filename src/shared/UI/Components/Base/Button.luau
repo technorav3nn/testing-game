@@ -5,7 +5,6 @@ local vide = require(ReplicatedStorage.Packages.Vide)
 
 local create = vide.create
 local source = vide.source
-local spring = vide.spring
 local changed = vide.changed
 
 type Prop<T> = (() -> T) | T
@@ -13,7 +12,7 @@ type Prop<T> = (() -> T) | T
 export type Props = {
 	Size: Prop<UDim2>?,
 	Position: Prop<UDim2>?,
-	AnchorPoint: Prop<UDim2>?,
+	AnchorPoint: Prop<Vector2>?,
 
 	BgColor: Prop<Color3>?,
 	TextColor: Prop<Color3>?,
@@ -42,7 +41,9 @@ local function Button(props: Props)
 		Text = props.Text or "Button",
 		TextScaled = true,
 		FontFace = theme.fonts.sans,
-		changed("GuiState", guiState),
+		changed("GuiState", function(state)
+			guiState(state)
+		end),
 
 		create "UICorner" {
 			CornerRadius = props.CornerRadius or theme.radii.rounded,

@@ -13,7 +13,7 @@ local create = vide.create
 local useAtom = videCharm.useAtom
 
 local function CashDisplay()
-	local cash = useAtom(playerData.cashAtom)
+	local cash = useAtom((playerData.cashAtom :: any) :: () -> number?)
 
 	return UIFrame {
 		Name = "CashDisplay",
@@ -24,7 +24,7 @@ local function CashDisplay()
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
 			Text = function()
-				return `${Formatters:FormatNumber(cash())}`
+				return `${Formatters:FormatNumber((cash :: () -> number)())}`
 			end,
 			TextColor3 = theme.colors.primary,
 			FontFace = theme.fonts.sansBold,

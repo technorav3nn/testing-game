@@ -14,7 +14,9 @@ local unmount
 local mounted = false
 
 local function cleanup()
-	unmount();
+	if unmount then
+		unmount()
+	end
 	(Players.LocalPlayer.PlayerGui :: any).WalletView:Destroy()
 end
 

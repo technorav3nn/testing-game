@@ -7,6 +7,6 @@ local App = require(ReplicatedStorage.UI.App)
 
 print("Starting app...")
 
-Loader.SpawnAll(Loader.LoadChildren(script.Managers), "OnStart")
+Loader.SpawnAll(Loader.LoadChildren(script.Services), "OnStart")
 -- Loader.SpawnAll(Loader.LoadDescendants(script.Managers.Network), "OnStart")
 vide.mount(App, game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))

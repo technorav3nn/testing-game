@@ -18,7 +18,7 @@ local isServer = RunService:IsServer()
 
 local WEAPON_TAG = "WEAPON_SYSTEM_WEAPON"
 
-local WEAPON_TYPES = {} :: { ["BulletWeapon"]: any, ["RPGWeapon"]: any }
+local WEAPON_TYPES = {} :: { [string]: any }
 do
 	local weaponTypesModulePath = script.Parent.WeaponTypes
 	for _, weaponType in weaponTypesModulePath:GetChildren() do
@@ -41,7 +41,7 @@ type WeaponsSystemProps = {
 	Shutdown: () -> (),
 	GetTypeFromTags: (instance: Instance) -> Weapon?,
 	CreateWeaponForInstance: (weaponInstance: Instance) -> (),
-	GetWeaponForInstance: (weaponInstance: Instance) -> Weapon?,
+	GetWeaponForInstance: (weaponInstance: Instance) -> Weapon | nil,
 	SetWeaponEquipped: (weapon: Weapon?, equipped: boolean) -> (),
 
 	OnCharacterAdded: (character: Model) -> (),
@@ -69,7 +69,6 @@ function WeaponsSystem.Setup()
 		warn("Warning: trying to run WeaponsSystem setup twice on the same module.")
 		return
 	end
-	print(script.Parent:GetFullName(), "is now active.")
 
 	WeaponsSystem.isSetupLoading = true
 
@@ -78,7 +77,7 @@ function WeaponsSystem.Setup()
 	else
 		Players.LocalPlayer.CharacterAdded:Connect(WeaponsSystem.OnCharacterAdded)
 		if Players.LocalPlayer.Character then
-			WeaponsSystem.OnCharacterAdded(Players.LocalPlayer.Character)
+			WeaponsSystem.OnCharacterAdded(Players.LocalPlayer.Character :: Model)
 		end
 		local App = require("./UI/App")
 		WeaponsSystem.cleanupVide = vide.mount(App, Players.LocalPlayer:WaitForChild("PlayerGui"))
@@ -98,6 +97,7 @@ function WeaponsSystem.Setup()
 end
 
 function WeaponsSystem.Shutdown()
+	print("Shutting down WeaponsSystem...")
 	if not WeaponsSystem.isSetup then
 		return
 	end
@@ -129,6 +129,11 @@ function WeaponsSystem.GetTypeFromTags(instance: Instance)
 end
 
 function WeaponsSystem.CreateWeaponForInstance(weaponInstance)
+	if weaponInstance:FindFirstAncestor("Assets") then
+		-- Don't create weapons for assets in the Assets folder
+		return
+	end
+
 	task.spawn(function()
 		local weaponType = WeaponsSystem.GetTypeFromTags(weaponInstance)
 		if not weaponType then
@@ -215,7 +220,6 @@ function WeaponsSystem.SetWeaponEquipped(weapon: Weapon?, equipped: boolean)
 
 	if weaponChanged then
 		local gui = Players.LocalPlayer.PlayerGui:FindFirstChild("WeaponsSystemDisplay") :: ScreenGui
-		print("WeaponsSystem.setWeaponEquipped: Weapon changed.", WeaponsSystem.currentWeapon, lastWeapon)
 
 		local tool = (Players.LocalPlayer.Character :: Model):FindFirstChildOfClass("Tool")
 		if not tool or not tool:GetAttribute("WeaponType") then
@@ -225,12 +229,11 @@ function WeaponsSystem.SetWeaponEquipped(weapon: Weapon?, equipped: boolean)
 			assert(gui, "WeaponsSystem.setWeaponEquipped: Could not find WeaponsSystemDisplay GUI.")
 			gui.Enabled = true
 		end
-		print("Current weapon changed to ", weapon and weapon.weaponInstance.Name or "nil")
 		WeaponsSystem.CurrentWeaponChanged:Fire(weapon.weaponInstance, lastWeapon and lastWeapon.weaponInstance)
 	end
 end
 
-function WeaponsSystem.GetWeaponForInstance(weaponInstance)
+function WeaponsSystem.GetWeaponForInstance(weaponInstance): Weapon?
 	if not (typeof(weaponInstance) == "Instance") then
 		warn("WeaponsSystem.getWeaponForInstance(weaponInstance): 'weaponInstance' was not an instance.")
 		return nil
@@ -240,7 +243,12 @@ function WeaponsSystem.GetWeaponForInstance(weaponInstance)
 	return WeaponsSystem.knownWeapons[guid]
 end
 
-function WeaponsSystem.OnCharacterAdded(_character: Model) end
+function WeaponsSystem.OnCharacterAdded(_character: Model)
+	local gui = Players.LocalPlayer.PlayerGui:FindFirstChild("WeaponsSystemDisplay") :: ScreenGui
+	if gui then
+		gui.Enabled = false
+	end
+end
 
 function WeaponsSystem.OnWeaponAdded(weaponInstance: Instance)
 	if weaponInstance.Parent == StarterPack then

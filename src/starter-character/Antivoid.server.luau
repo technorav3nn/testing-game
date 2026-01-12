@@ -1,3 +1,4 @@
+--!nonstrict
 -- Why does this script exist?
 -- Because theres a bug in my gun system that wouldn't refresh the cursor
 -- when the character falls out of the world and respawns.
@@ -15,7 +16,7 @@ local function onFreeFalling(Active)
 		if humanoidRootPart.Position.Y <= -50 then
 			humanoidRootPart.Anchored = true
 			task.wait(1)
-			local success, err = pcall(function()
+			local success, err: string? = pcall(function()
 				for _, v in ipairs(character:GetDescendants()) do
 					if v:IsA("BasePart") then
 						(v :: any).Velocity = Vector3.new(0, 0, 0)

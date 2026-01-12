@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -6,8 +7,11 @@ local Loader = require(ReplicatedStorage.Packages.Loader)
 
 DataService:Init()
 
-Loader.SpawnAll(Loader.LoadChildren(ServerScriptService.Server.Managers), "OnStart")
-Loader.SpawnAll(Loader.LoadDescendants(ServerScriptService.Server.Managers.Network), "OnStart")
+Loader.SpawnAll(Loader.LoadChildren(ServerScriptService.Server.Services), "OnStart")
+Loader.SpawnAll(Loader.LoadChildren(ServerScriptService.Server.Services.World), "OnStart")
+Loader.SpawnAll(Loader.LoadDescendants(ServerScriptService.Server.Services.NetworkService), "OnStart")
+
+Loader.LoadDescendants(script.Components)
 
 -- DataService.NewPlayerDataLoaded:Connect(function(player)
 -- 	while true do

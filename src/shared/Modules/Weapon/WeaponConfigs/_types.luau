@@ -1,3 +1,8 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TypeUtils = require(ReplicatedStorage.Modules.Utils.TypeUtils)
+
+type keyof<T> = TypeUtils.keyof<T>
+
 export type GunConfig = {
 	Type: "BulletWeapon" | "RPGWeapon",
 	Damage: number,
@@ -9,13 +14,7 @@ export type GunConfig = {
 	ReloadTime: number,
 	Range: number,
 
-	Sounds: {
-		Fire: string?,
-		Reload: string?,
-		Empty: string?,
-		-- Only for RPG weapons
-		Flying: string?,
-	},
+	Sounds: Sounds,
 	ExplosionConfig: ExplosionConfig?,
 }
 
@@ -24,6 +23,16 @@ export type ExplosionConfig = {
 	Damage: number,
 	Radius: number,
 }
+
+export type Sounds = {
+	Fire: string?,
+	Reload: string?,
+	Empty: string?,
+	-- Only for RPG weapons
+	Flying: string?,
+}
+
+export type SoundTypes = keyof<Sounds>
 
 local possibleProperties = {
 	"Type",
@@ -44,9 +53,10 @@ local possibleAttributes = {
 	AmmoInMagazine = "AmmoInMagazine",
 	TotalAmmo = "TotalAmmo",
 	IsReloading = "IsReloading",
+	WeaponGUID = "WeaponGUID",
 }
 
-export type PossibleAttributes = "AmmoInMagazine" | "TotalAmmo" | "IsReloading" | "WeaponGUID"
+export type PossibleAttributes = keyof<typeof(possibleAttributes)>
 
 local unconfigurableAttributes = {
 	IsReloading = {

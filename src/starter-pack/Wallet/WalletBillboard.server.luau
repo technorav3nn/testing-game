@@ -10,7 +10,7 @@ tool.Equipped:Connect(function()
 	-- tool isnt in starterpack, so cast to character (model)
 	local player = game.Players:GetPlayerFromCharacter((script.Parent.Parent :: any) :: Model)
 	if not player then
-		error("Player couldn't be found in WalletBillboard")
+		-- its in the backpack, so return
 		return
 	end
 	local cashText = script.Parent.Handle.BillboardGui.CashText

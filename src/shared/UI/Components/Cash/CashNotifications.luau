@@ -19,7 +19,10 @@ local function showCashNotification(amount: number)
 		local stroke = create "UIStroke" {}
 		local label = create "TextLabel" {
 			TextColor3 = amount >= 0 and theme.colors.primary or theme.colors.error,
-			Text = `${amount}`,
+			Text = function()
+				local sign = if amount >= 0 then "" else "-"
+				return `{sign}${math.abs(amount)}`
+			end,
 			TextSize = 24,
 			Name = "CashNotification",
 			Position = px.udim2(0, 10, 1, -50)(),

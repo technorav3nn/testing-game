@@ -35,12 +35,14 @@ function WeaponUtils.new(weaponInstance: Tool, weapon: any): WeaponUtils
 	local self = setmetatable({}, WeaponUtils)
 	self.weaponInstance = weaponInstance
 	self.configs = configs
+	print(weaponInstance, weapon)
 	self.config = configs[weaponInstance.Name]
+	self._trove = Trove.new()
+	self.weapon = weapon
+
 	if not self.config then
 		error("WeaponUtils: No config found for weapon: " .. weaponInstance.Name)
 	end
-	self._trove = Trove.new()
-	self.weapon = weapon
 
 	return self
 end
@@ -71,7 +73,7 @@ function WeaponUtils.GetCASContextName(self: WeaponUtils): string
 end
 
 function WeaponUtils.SetupWeaponForClient(self: WeaponUtils)
-	print("WeaponUtils: SetupWeaponForClient for", self.weaponInstance.Name)
+	-- print("WeaponUtils: SetupWeaponForClient for", self.weaponInstance.Name)
 	if RunService:IsServer() then
 		return
 	end
@@ -83,7 +85,7 @@ function WeaponUtils.SetupWeaponForClient(self: WeaponUtils)
 			warn("WeaponUtils:SetupWeaponForClient: Weapon instance does not have a WeaponGUID attribute.")
 			return
 		end
-		WeaponNetwork.FireWeapon:Client():Fire(guid, mouse.Hit.Position)
+		WeaponNetwork.remotes.FireWeapon:fire(guid, mouse.Hit.Position)
 	end))
 
 	local WeaponsSystem = require("./WeaponsSystem") :: any
@@ -93,9 +95,11 @@ function WeaponUtils.SetupWeaponForClient(self: WeaponUtils)
 		ContextActionService:BindAction(
 			ctx,
 			function(_name: string, inputState: Enum.UserInputState, _inputObject: InputObject)
-				print(self.weaponInstance.Name)
+				-- print(self.weaponInstance.Name)
 				if inputState == Enum.UserInputState.Begin then
-					WeaponNetwork.ReloadWeapon:Client():Fire(self.weaponInstance:GetAttribute("WeaponGUID") :: string)
+					local guid = self.weaponInstance:GetAttribute("WeaponGUID") :: string
+					WeaponNetwork.remotes.ReloadWeapon:fire(guid)
+
 					return Enum.ContextActionResult.Pass
 				else
 					return Enum.ContextActionResult.Sink
@@ -119,12 +123,12 @@ function WeaponUtils.PlaySound(
 	self: WeaponUtils,
 	config: {
 		source: Instance,
-		name: "Fire" | "Empty" | "Reload" | "Flying",
+		name: ConfigTypes.SoundTypes,
 		volume: number?,
 		looped: boolean?,
 	}
 )
-	local soundId = self.config.Sounds[config.name]
+	local soundId = (self.config.Sounds :: { [string]: string? })[config.name]
 	if not soundId then
 		error("WeaponUtils:PlaySound: No soundId found for sound name: " .. config.name)
 	end
@@ -137,8 +141,12 @@ function WeaponUtils.PlaySound(
 
 	sound:Play()
 	if not sound.Looped then
-		sound.Ended:Connect(function()
+		local conn
+		conn = sound.Ended:Connect(function()
 			sound:Destroy()
+			if conn then
+				conn:Disconnect()
+			end
 		end)
 	end
 	return sound
@@ -221,7 +229,7 @@ function WeaponUtils.GetAttribute(self: WeaponUtils, attributeName: ConfigTypes.
 end
 
 function WeaponUtils.Destroy(self: WeaponUtils)
-	print("WeaponUtils: Destroying weapon utils for", self.weaponInstance.Name)
+	-- print("WeaponUtils: Destroying weapon utils for", self.weaponInstance.Name)
 	ContextActionService:UnbindAction(self:GetCASContextName())
 	self._trove:Destroy()
 end

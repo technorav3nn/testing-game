@@ -4,7 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Ragdoll = require(ReplicatedStorage.Modules.Ragdoll)
 local SoundUtils = require(ReplicatedStorage.Modules.Utils.SoundUtils)
 local Trove = require(ReplicatedStorage.Packages.Trove)
-local Types = require(ReplicatedStorage.Modules.Gun.GunConfigs._types)
+local Types = require(ReplicatedStorage.Modules.Weapon.WeaponConfigs._types)
 
 local explosionSound = ReplicatedStorage.Assets.GunAssets.RPG.Explosion
 
@@ -65,11 +65,12 @@ function Explosion.Detonate(self: Explosion, position: Vector3)
 	end
 
 	Debris:AddItem(explosion, 5)
-	local newSound = explosionSound:Clone()
+	local id = explosionSound.SoundId
+
 	SoundUtils:PlaySound({
-		SoundToPlay = newSound,
-		Parent = explosion,
-		Volume = 10,
+		id = id,
+		volume = 4,
+		source = explosion :: Instance,
 	})
 
 	if
@@ -87,7 +88,6 @@ function Explosion.Detonate(self: Explosion, position: Vector3)
 	local parts = workspace:GetPartBoundsInRadius(position, self.Radius, overlapParams)
 	local alreadyDamaged: { [Model]: true } = {}
 	for _, part in ipairs(parts) do
-		print(part.Name)
 		local character = part.Parent
 		if character and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart") then
 			if alreadyDamaged[character :: Model] then
@@ -100,8 +100,6 @@ function Explosion.Detonate(self: Explosion, position: Vector3)
 			local distance = (humanoidRootPart.Position - position).Magnitude
 			local damageFalloff = 1 - (distance / self.Radius)
 			local damageToApply = math.max(math.clamp(self.Damage * damageFalloff, 0, self.Damage), self.Damage / 2)
-
-			print("Applying damage: " .. damageToApply)
 
 			local force = Instance.new("BodyVelocity")
 			force.Velocity = (humanoidRootPart.Position - position).Unit * (250 * self.RadiusCoefficient)

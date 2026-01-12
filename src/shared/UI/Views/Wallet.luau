@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 
-local WalletDropCashFunction = require(ReplicatedStorage.Network.Functions.WalletDropCash)
+local Network = require(ReplicatedStorage.Network)
 
 local Button = require("../Components/Base/Button")
 local UIFrame = require("../Components/Base/Frame")
@@ -16,10 +16,10 @@ local source = vide.source
 local cleanup = vide.cleanup
 
 local function WalletView()
-	local text = source(nil) :: vide.source<string?>
+	local text = source("")
 
 	local function onClick()
-		if not text() then
+		if not text() or #(text()) == 0 then
 			StarterGui:SetCore("SendNotification", {
 				Title = "Cannot Drop Cash",
 				Text = "Enter a cash amount to drop!",
@@ -29,19 +29,25 @@ local function WalletView()
 		end
 
 		local amount = tonumber(text() :: string) :: number
-		local success, _uncast = WalletDropCashFunction:Call(amount):Await()
-
-		local result = _uncast :: WalletDropCashFunction.ReturnType
+		-- new type solver issue
+		local success, result = Network.cash.DropCash:request(amount):await()
 
 		if not success then
-			error("[Wallet]: couldn't drop cash!!")
+			warn("Failed to drop cash:", result)
+			StarterGui:SetCore("SendNotification", {
+				Title = "Cannot Drop Cash",
+				Text = "Failed to drop cash. Please try again later.",
+				Duration = 3.5,
+			})
+			return
 		end
-		if typeof(result) == "number" then
-			return StarterGui:SetCore("SendNotification", {
+		if result and typeof(result) == "number" and result ~= 0 then
+			StarterGui:SetCore("SendNotification", {
 				Title = "Dropped Cash",
 				Text = `You must wait {math.round(result)} seconds before dropping again!`,
 				Duration = 3.5,
 			})
+			return
 		end
 	end
 

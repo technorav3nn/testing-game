@@ -77,38 +77,42 @@ local function Button(props: {
 			SortOrder = Enum.SortOrder.LayoutOrder,
 			-- Padding = UDim.new(0, 8),
 		},
-		unpack(props.Icon and {
-			create "ImageLabel" {
-				Name = "Icon",
-				Position = UDim2.fromScale(0.5, 0.3),
-				Size = px.offset(24, 24),
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				BackgroundTransparency = 1,
-				Visible = props.Icon ~= nil,
-				Image = props.Icon.Url,
-				ImageRectSize = props.Icon.ImageRectSize,
-				ImageRectOffset = props.Icon.ImageRectOffset,
-				ScaleType = Enum.ScaleType.Fit,
-				ImageColor3 = props.IconColor or theme.colors.neutral,
-			},
-		} or {}),
-		unpack((props.Text and props.Icon) and {
-			create "TextLabel" {
-				Name = "Text",
-				BackgroundTransparency = 1,
-				Text = props.Text,
-				TextScaled = true,
-				TextColor3 = theme.colors.neutral,
-				FontFace = theme.fonts.sansBold,
-				Size = px.udim2(0, 0, 0.5, 0),
-				AutomaticSize = Enum.AutomaticSize.X,
-				create "UIStroke" {
-					Color = theme.stroke.color,
-					Thickness = 1,
+		unpack(if props.Icon
+			then {
+				create "ImageLabel" {
+					Name = "Icon",
+					Position = UDim2.fromScale(0.5, 0.3),
+					Size = px.offset(24, 24),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					BackgroundTransparency = 1,
+					Visible = props.Icon ~= nil,
+					Image = props.Icon.Url,
+					ImageRectSize = props.Icon.ImageRectSize,
+					ImageRectOffset = props.Icon.ImageRectOffset,
+					ScaleType = Enum.ScaleType.Fit,
+					ImageColor3 = props.IconColor or theme.colors.neutral,
 				},
-			},
-		} or {}),
-		unpack(props),
+			}
+			else {}),
+		unpack(if (props.Text and props.Icon)
+			then {
+				create "TextLabel" {
+					Name = "Text",
+					BackgroundTransparency = 1,
+					Text = props.Text,
+					TextScaled = true,
+					TextColor3 = theme.colors.neutral,
+					FontFace = theme.fonts.sansBold,
+					Size = px.udim2(0, 0, 0.5, 0),
+					AutomaticSize = Enum.AutomaticSize.X,
+					create "UIStroke" {
+						Color = theme.stroke.color,
+						Thickness = 1,
+					},
+				},
+			}
+			else {}),
+		unpack(props :: any),
 	}
 end
 

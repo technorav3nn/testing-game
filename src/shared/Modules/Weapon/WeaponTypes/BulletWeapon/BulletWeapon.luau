@@ -121,13 +121,13 @@ function BulletWeapon.OnRayHit(self: BulletWeapon, raycastResult: RaycastResult)
 	local config = self.weaponUtils.configs[self.weaponInstance.Name]
 
 	if hitPart ~= nil and hitPart.Parent ~= nil then
-		local humanoid = hitPart.Parent:FindFirstChildOfClass("Humanoid")
+		local humanoid = (hitPart.Parent :: Instance):FindFirstChildOfClass("Humanoid")
 		if not humanoid then
 			-- Check for accessories or nested parts
 			if hitPart:FindFirstAncestor("Accessory") then
 				local accessory = hitPart:FindFirstAncestor("Accessory")
 				if accessory and accessory.Parent then
-					humanoid = accessory.Parent:FindFirstChildOfClass("Humanoid")
+					humanoid = (accessory.Parent :: Instance):FindFirstChildOfClass("Humanoid")
 				end
 			end
 		end
@@ -162,7 +162,10 @@ function BulletWeapon.CreateBeamTracer(_self: BulletWeapon, firePoint: Attachmen
 	att1.Parent = tracer
 
 	local beam = ReplicatedStorage.Assets.GunAssets.GunBeam:Clone()
-	beam.Color = ColorSequence.new(Color3.new(1, 1, 0))
+	beam.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.new(1, 1, 0)),
+		ColorSequenceKeypoint.new(1, Color3.new(1, 1, 0)),
+	})
 	beam.Attachment0 = att0
 	beam.Attachment1 = att1
 	beam.Parent = tracer

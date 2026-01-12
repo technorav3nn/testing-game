@@ -9,7 +9,7 @@ RPGWeapon.__index = RPGWeapon
 
 export type RPGWeaponProps = {
 	weaponInstance: Tool,
-	weaponUtils: typeof(WeaponUtils.new({} :: any)),
+	weaponUtils: typeof(WeaponUtils.new({} :: any, {} :: any)),
 	_explosion: typeof(Explosion.new({} :: any))?,
 }
 
@@ -19,12 +19,10 @@ export type RPGWeaponConstructorProps = {
 
 export type RPGWeapon = typeof(setmetatable({} :: RPGWeaponProps, RPGWeapon))
 
-function RPGWeapon.new(props: RPGWeaponConstructorProps): RPGWeapon
+function RPGWeapon.new(props: RPGWeaponConstructorProps)
 	local self = setmetatable({}, RPGWeapon)
 	self.weaponInstance = props.weaponInstance
 	self.weaponUtils = WeaponUtils.new(self.weaponInstance, self)
-
-	print("Setting up RPG weapon for instance:", self.weaponInstance.Name)
 
 	if RunService:IsClient() then
 		self.weaponUtils:SetupWeaponForClient()
@@ -65,12 +63,10 @@ function RPGWeapon.OnFired(self: RPGWeapon, player: Player, instance: Tool, mous
 		) :: Attachment
 	local mouseDirection = (mousePos - firePoint.WorldPosition).Unit
 
-	return self:FireRocket(mousePos, mouseDirection)
+	return self.FireRocket(self, mousePos, mouseDirection)
 end
 
 function RPGWeapon.FireRocket(self: RPGWeapon, mousePos: Vector3, direction: Vector3)
-	assert(self._explosion, "Explosion module not initialized for RocketLauncher")
-
 	local toolRocket = self.weaponInstance:FindFirstChild("Rocket") :: Part?
 	if not toolRocket then
 		error("RocketLauncher tool is missing Rocket part!!")
@@ -100,6 +96,7 @@ function RPGWeapon.FireRocket(self: RPGWeapon, mousePos: Vector3, direction: Vec
 		name = "Flying",
 		source = rocket,
 		looped = true,
+		volume = 0.5,
 	})
 
 	local raycastParams = RaycastParams.new()
@@ -123,6 +120,7 @@ function RPGWeapon.FireRocket(self: RPGWeapon, mousePos: Vector3, direction: Vec
 		if result or (rocket.Position - direction).Magnitude < 0.2 then
 			-- explode, this module automatically cleans the explosion after 4 seconds
 			-- so dont need to destroy
+			assert(self._explosion, "Explosion module not initialized for RocketLauncher")
 			self._explosion:Detonate(rocket.Position)
 			rocket:Destroy()
 			connection:Disconnect()
